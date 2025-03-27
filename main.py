@@ -80,7 +80,7 @@ class Machine:
         self.rotor_pos = None
 
     def settings(self):
-        self.choice_rotors = list(map(int, input("Выберите 3 ротора (1-5):").split(' ')))
+        self.choice_rotors = list(map(int, input("Выберите 3 ротора (1-5): ").split(' ')))
         self.rotor_pos = list(
             map(lambda x: int(x) - 1, input("Выберите стартовые положения для роторов (1-26): ").split()))
         print("коммутации потом")
@@ -91,11 +91,21 @@ class Machine:
 
     def go(self, s, rotor):
         p = s + self.rotor_pos[rotor - 1]
-        if p % 26 == 0:
-            s = self.rotors[rotor].go_through(p % 26 + 1)
-        else:
-            s = self.rotors[rotor].go_through(p % 26)
+        if p > 26:
+            p -= 26
+        s = self.rotors[rotor].go_through(p)
+        # if p % 26 == 0:
+        #     s = self.rotors[rotor].go_through(p % 26 + 1)
+        # else:
+        #     s = self.rotors[rotor].go_through(p % 26)
         return s
+
+    def key_for_data(self, data, rotor):
+        d = self.rotors[rotor].connections
+        for i in d:
+            if d[i] == data:
+                return i
+        return "Ошибка"
 
     def coding(self, letter):
         num_code = self.letters_to_numbers(letter)
@@ -127,8 +137,11 @@ class Machine:
                 # сигнал назад
                 s = self.UKW[s]
                 for rotor in range(1, len(self.choice_rotors) + 1):
-                    s = self.go(s, rotor)
-                    s -= self.rotor_pos[rotor - 1]
+                    s += self.rotor_pos[rotor - 1]
+                    if s > 26:
+                        s -= 26
+                    s = self.key_for_data(s, rotor)
+                    # s = self.go(s, rotor)
 
                 new_letter += chr(s + 64)
 
