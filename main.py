@@ -1,4 +1,5 @@
 import Rotors
+import UKW
 
 
 class Machine:
@@ -31,34 +32,7 @@ class Machine:
             25: 25,
             26: 26
         }  # входной диск
-        self.UKW = {
-            1: 5,
-            2: 10,
-            3: 13,
-            4: 26,
-            5: 1,
-            6: 12,
-            7: 25,
-            8: 24,
-            9: 22,
-            10: 2,
-            11: 23,
-            12: 6,
-            13: 3,
-            14: 18,
-            15: 17,
-            16: 21,
-            17: 15,
-            18: 14,
-            19: 20,
-            20: 19,
-            21: 16,
-            22: 9,
-            23: 11,
-            24: 8,
-            25: 7,
-            26: 4
-        }  # рефлектор
+        self.UKW = None  # рефлектор
         self.rotors = {
             1: Rotors.RotorI(),
             2: Rotors.RotorII(),
@@ -73,7 +47,7 @@ class Machine:
 
     def check_rotors(self):
         for i in self.choice_rotors:
-            if i < 1 or i > 5:
+            if i < 1 or i > 5 or (len(self.choice_rotors) != len(set(self.choice_rotors))):
                 print("Некорректный ввод параметров")
                 return 1
         return 0
@@ -86,6 +60,20 @@ class Machine:
         return 0
 
     def settings(self):
+        f = 1
+        while f:
+            c = int(input("Выберите рефлектор (UKW-A - 1, UKW-B - 2, UKW-C - 3): "))
+            if c == 1:
+                self.UKW = UKW.UKW().UKW_A
+            elif c == 2:
+                self.UKW = UKW.UKW().UKW_B
+            elif c == 3:
+                self.UKW = UKW.UKW().UKW_C
+            else:
+                print("Некорректный ввод")
+                continue
+            break
+
         f = 1
         while f:
             self.choice_rotors = list(map(int, input("Выберите 3 ротора (1-5): ").split(' ')))
@@ -188,6 +176,10 @@ class Machine:
                 s += 0 - self.rotor_pos[2]
                 s = self.balance(s)
 
+                for i in self.ETW:
+                    if self.ETW[i] == s:
+                        s = self.ETW[i]
+
                 if s in self.commutations:
                     s = self.commutations[s]
 
@@ -206,14 +198,10 @@ class Machine:
 
     def user(self):
         self.settings()
-        while 1:
-            letter = input("\nВведите сообщение: ")
-            if letter == '0':
-                print("Работа завершена")
-                break
-            else:
-                self.coding(letter)
+        letter = input("\nВведите сообщение: ")
+        self.coding(letter)
 
 
-M = Machine()
-M.user()
+if __name__ == "__main__":
+    M = Machine()
+    M.user()
