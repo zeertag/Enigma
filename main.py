@@ -100,13 +100,65 @@ class Machine:
                 print(alphabet)
                 connect = input("Введите соединение: ")
                 if connect == "0":
+                    print()
                     break
 
                 connect = connect.split(' ')
-                self.commutations[ord(connect[0]) - 64] = ord(connect[-1]) - 64
-                self.commutations[ord(connect[-1]) - 64] = ord(connect[0]) - 64
-                alphabet.remove(connect[0])
-                alphabet.remove(connect[1])
+                self.commutations[ord(connect[0].upper()) - 64] = ord(connect[-1].upper()) - 64
+                self.commutations[ord(connect[-1].upper()) - 64] = ord(connect[0].upper()) - 64
+                alphabet.remove(connect[0].upper())
+                alphabet.remove(connect[1].upper())
+        else:
+            print()
+
+    def settings_from_file(self, f):
+        lines = f.split('\n')
+        # print(lines)
+
+        # выбор рефлектора
+        try:
+            r = int(lines[0])
+        except ValueError:
+            exit("Ошибка в выборе рефлектора.")
+
+        if r == 1:
+            self.UKW = UKW.UKW().UKW_A
+        elif r == 2:
+            self.UKW = UKW.UKW().UKW_B
+        elif r == 3:
+            self.UKW = UKW.UKW().UKW_C
+        else:
+            exit("Некорректный ввод рефлектора.")
+
+        # выбор роторов
+        self.choice_rotors = []
+        for i in lines[1].split(' '):
+            try:
+                self.choice_rotors.append(int(i))
+            except ValueError:
+                exit("Ошибка в выборе ротора.")
+        if self.check_rotors():
+            exit("Ошибка при выборе роторов.")
+
+        # выбор позиций
+        self.rotor_pos = []
+        for i in lines[2].split(' '):
+            try:
+                self.rotor_pos.append(int(i) - 1)
+            except ValueError:
+                exit("Ошибка в выборе стартовой позиции ротора.")
+        if self.check_poses():
+            exit("Ошибка при выборе стартовых позиций роторов.")
+        self.rotor_pos.append(0)
+
+        # коммутации
+        if lines[3] != '0':
+            l = lines[3].split(';')
+            for connect in l:
+                connect = connect.split(" ")
+                connect = list(map(lambda s: s.upper(), connect))
+                self.commutations[ord(connect[0].upper()) - 64] = ord(connect[-1].upper()) - 64
+                self.commutations[ord(connect[-1].upper()) - 64] = ord(connect[0].upper()) - 64
 
     def rotate(self, rotor):
         if self.rotors[rotor].notch == self.rotor_pos[rotor - 1] - 1:
@@ -197,8 +249,12 @@ class Machine:
         return num_code
 
     def user(self):
-        self.settings()
-        letter = input("\nВведите сообщение: ")
+        f = open("settings.txt").read()
+        if len(f) == 0:
+            self.settings()
+        else:
+            self.settings_from_file(f)
+        letter = input("Введите сообщение: ")
         self.coding(letter)
 
 
