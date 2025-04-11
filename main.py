@@ -1,3 +1,6 @@
+import socket
+import threading
+
 import Rotors
 import UKW
 
@@ -248,16 +251,48 @@ class Machine:
                 num_code.append(ord(i.upper()) - 64)
         return num_code
 
+    def send_message(self, message):
+        encrypted_message = self.coding(message)
+        try:
+            target_ip = '192.168.0.1'
+            target_port = 9090
+
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((target_ip, target_port))
+                s.sendall(encrypted_message.encode())
+            print(f"Сообщение отправлено: {encrypted_message}")
+        except Exception as e:
+            print(f"Ошибка отправки сообщения: {e}")
+
+    def receive_message(self, my_port):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+            server_socket.bind(('0.0.0.0', my_port))
+            server_socket.listen(1)
+            print(f"Ожидаю соединение на порту {my_port}...")
+            conn, addr = server_socket.accept()
+            with conn:
+                encrypted_message = conn.recv(1024).decode()
+                if encrypted_message:
+                    decrypted_message = self.coding(encrypted_message)
+                    print(f"Получено сообщение: {decrypted_message}")
+
     def user(self):
         f = open("settings.txt").read()
         if len(f) == 0:
             self.settings()
         else:
             self.settings_from_file(f)
+
         letter = input("Введите сообщение: ")
-        self.coding(letter)
+
+        self.send_message(letter)
 
 
 if __name__ == "__main__":
     M = Machine()
+
+    receive_thread = threading.Thread(target=M.receive_message, args=(9091,))
+    receive_thread.daemon = True
+    receive_thread.start()
+
     M.user()
