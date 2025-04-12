@@ -164,8 +164,15 @@ class Machine:
                 self.commutations[ord(connect[-1].upper()) - 64] = ord(connect[0].upper()) - 64
 
     def rotate(self, rotor):
+        if rotor == 3:
+            self.rotor_pos[rotor - 1] += 1
+            if self.rotor_pos[rotor - 1] > 26:
+                self.rotor_pos[rotor - 1] = 1
+
         if self.rotors[rotor].notch == self.rotor_pos[rotor - 1] - 1:
             self.rotor_pos[rotor - 2] += 1
+            if self.rotor_pos[rotor - 2] > 26:
+                self.rotor_pos[rotor - 2] = 1
 
     def go(self, s, rotor, r):
         p = s + (self.rotor_pos[r - 1] - self.rotor_pos[r])
@@ -204,14 +211,8 @@ class Machine:
                 else:
                     s = self.ETW[symbol]
                 for rotor in range(len(self.choice_rotors), 0, -1):
-                    if rotor == 3:
-                        self.rotor_pos[rotor - 1] += 1
+                    if rotor > 1:
                         self.rotate(rotor)
-                        self.rotate(rotor - 1)
-
-                        for i in range(len(self.rotor_pos) - 1):
-                            if self.rotor_pos[i] == 27:
-                                self.rotor_pos[i] = 1
 
                     s = self.go(s, self.choice_rotors[rotor - 1], rotor)
 
@@ -279,7 +280,7 @@ class Machine:
         if mode == '1':
             ip = input("Введите IP-адрес получателя (192.168.0.xxx): ").strip()
             self.send_message(ip)
-        elif mode == 'receive':
+        elif mode == '2':
             my_ip = input("Введите свой IP-адрес (192.168.0.xxx): ").strip()
             self.receive_message(my_ip)
         else:
