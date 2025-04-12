@@ -48,6 +48,12 @@ class Machine:
         self.rotor_pos = None
         self.commutations = {}
 
+        self.host = '192.168.0.104'
+        self.port = 12345
+        self.peer_address = None
+        self.socket = None
+        self.running = True
+
     def check_rotors(self):
         for i in self.choice_rotors:
             if i < 1 or i > 5 or (len(self.choice_rotors) != len(set(self.choice_rotors))):
@@ -240,7 +246,7 @@ class Machine:
 
                 new_letter += chr(s + 64)
 
-        print(new_letter)
+        return new_letter
 
     def letters_to_numbers(self, letter):
         num_code = []
@@ -251,30 +257,39 @@ class Machine:
                 num_code.append(ord(i.upper()) - 64)
         return num_code
 
-    def send_message(self, message):
-        encrypted_message = self.coding(message)
-        try:
-            target_ip = '192.168.0.1'
-            target_port = 9090
+    def send_message(self, target_ip, port=12345):
+        letter = input("Введите сообщение: ")
+        coded = self.coding(letter)
 
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((target_ip, target_port))
-                s.sendall(encrypted_message.encode())
-            print(f"Сообщение отправлено: {encrypted_message}")
-        except Exception as e:
-            print(f"Ошибка отправки сообщения: {e}")
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((target_ip, port))
+            s.sendall(coded.encode('utf-8'))
+            print(f"[Отправлено] Зашифрованное сообщение: {coded}")
 
-    def receive_message(self, my_port):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-            server_socket.bind(('0.0.0.0', my_port))
-            server_socket.listen(1)
-            print(f"Ожидаю соединение на порту {my_port}...")
-            conn, addr = server_socket.accept()
+    def receive_message(self, local_ip, port=12345):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind((local_ip, port))
+            s.listen()
+            print(f"[Ожидание] Ожидаем подключение на {local_ip}:{port}...")
+            conn, addr = s.accept()
             with conn:
-                encrypted_message = conn.recv(1024).decode()
-                if encrypted_message:
-                    decrypted_message = self.coding(encrypted_message)
-                    print(f"Получено сообщение: {decrypted_message}")
+                print(f"[Подключено] Получено соединение от {addr}")
+                data = conn.recv(1024).decode('utf-8')
+                print(f"[Получено] Зашифрованное сообщение: {data}")
+
+                original = self.coding(data)
+                print(f"[Расшифровка] Исходное сообщение: {original}")
+
+    def connect_computer(self):
+        mode = input("Вы хотите отправить или принять сообщение? (1 - отправить/2 - получить): ").strip().lower()
+        if mode == '1':
+            ip = input("Введите IP-адрес получателя (192.168.0.xxx): ").strip()
+            self.send_message(ip)
+        elif mode == 'receive':
+            my_ip = input("Введите свой IP-адрес (192.168.0.xxx): ").strip()
+            self.receive_message(my_ip)
+        else:
+            print("Ошибка")
 
     def user(self):
         f = open("settings.txt").read()
@@ -283,16 +298,9 @@ class Machine:
         else:
             self.settings_from_file(f)
 
-        letter = input("Введите сообщение: ")
-
-        self.send_message(letter)
+        self.connect_computer()
 
 
 if __name__ == "__main__":
     M = Machine()
-
-    receive_thread = threading.Thread(target=M.receive_message, args=(9091,))
-    receive_thread.daemon = True
-    receive_thread.start()
-
     M.user()
