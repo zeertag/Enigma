@@ -48,12 +48,6 @@ class Machine:
         self.rotor_pos = None
         self.commutations = {}
 
-        self.host = '192.168.0.104'
-        self.port = 12345
-        self.peer_address = None
-        self.socket = None
-        self.running = True
-
     def check_rotors(self):
         for i in self.choice_rotors:
             if i < 1 or i > 5 or (len(self.choice_rotors) != len(set(self.choice_rotors))):
