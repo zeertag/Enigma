@@ -1,5 +1,4 @@
 import socket
-import threading
 
 import Rotors
 import UKW
@@ -276,13 +275,18 @@ class Machine:
                 print(f"[Расшифровка] Исходное сообщение: {original}")
 
     def connect_computer(self):
-        mode = input("Вы хотите отправить или принять сообщение? (1 - отправить/2 - получить): ").strip().lower()
+        mode = input(
+            "Вы хотите отправить или принять сообщение? (1 - отправить/2 - получить/3 - не связываться): ").strip().lower()
         if mode == '1':
             ip = input("Введите IP-адрес получателя (192.168.0.xxx): ").strip()
             self.send_message(ip)
         elif mode == '2':
             my_ip = input("Введите свой IP-адрес (192.168.0.xxx): ").strip()
             self.receive_message(my_ip)
+        elif mode == '3':
+            letter = input("Введите сообщение: ")
+            coded = self.coding(letter)
+            print(coded)
         else:
             print("Ошибка")
 
